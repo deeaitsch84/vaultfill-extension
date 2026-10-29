@@ -66,6 +66,8 @@ async function finishLogin(p, grant, { totp, provider } = {}) {
     refreshToken: t.refresh_token, twoFactorRemember: t.twoFactorToken || twoFactorRemember,
   });
   await session.remove('pending');
+  const { kdfPins = {} } = await local.get('kdfPins');
+  await local.set({ kdfPins: { ...kdfPins, [`${p.server}|${p.email}`]: p.kdf } });
   await sync();
   await openVault(userKey);
   connectHub();
@@ -78,6 +80,8 @@ async function login({ server, email, password, totp }) {
   server = await v.resolveServer(server);
   email = email.trim().toLowerCase();
   const kdf = await v.prelogin(server, email);
+  const { kdfPins = {} } = await local.get('kdfPins');
+  v.checkKdf(kdf, kdfPins[`${server}|${email}`]);
   const mk = await v.makeMasterKey(password, email, kdf);
   const p = { server, email, kdf, mk: v.b64(mk) };
   try {
@@ -170,7 +174,11 @@ async function unlockTouchId({ secret }) {
   return {};
 }
 
-const lock = () => session.remove(['userKey', 'orgKeys', 'index', 'pending', 'sso']); // PIN stays armed
+// PIN stays armed; captured passwords (offers) and remembered usernames go with the key
+const lock = async () => {
+  const parked = Object.keys(await session.get(null)).filter((k) => /^(offer|step):/.test(k));
+  await session.remove(['userKey', 'orgKeys', 'index', 'pending', 'sso', ...parked]);
+};
 
 // Prefer the action popup (Touch ID starts there by itself); a window only if Chrome refuses to open it.
 async function openUnlock() {
@@ -253,9 +261,12 @@ async function totpCode({ id }, sender) {
 const OFFER_TTL = 5 * 60e3;
 const sameUser = (a = '', b = '') => a.trim().toLowerCase() === b.trim().toLowerCase();
 const publicOffer = (o) => o && { kind: o.id ? 'update' : 'save', name: o.name, username: o.username, host: o.host };
+// Note: no update without a username match — guessing the entry let a page overwrite a stored password.
+
+const siteOf = (url) => { try { const h = new URL(url).hostname; return v.registrableDomain(h) ?? h; } catch { return null; } };
 
 async function stepUser({ username }, sender) {
-  await session.set({ [`step:${sender.tab.id}`]: { username, host: new URL(sender.url).hostname, ts: Date.now() } });
+  await session.set({ [`step:${sender.tab.id}`]: { username, site: siteOf(sender.url), ts: Date.now() } });
   return {};
 }
 
@@ -267,7 +278,7 @@ async function captured({ username = '', password }, sender) {
   const s = await session.get(['index', 'userKey', 'orgKeys', `step:${sender.tab.id}`]);
   if (!s.index) return {}; // locked: nothing to compare against
   const step = s[`step:${sender.tab.id}`];
-  if (!username && step && Date.now() - step.ts < OFFER_TTL) username = step.username; // two-step login
+  if (!username && step && step.site === siteOf(sender.url) && Date.now() - step.ts < OFFER_TTL) username = step.username; // two-step login
   const candidates = matching(s.index, sender.url);
   let update;
   for (const e of candidates) {
@@ -276,7 +287,6 @@ async function captured({ username = '', password }, sender) {
     if (known === password && (!username || sameUser(e.username, username))) return {}; // nothing new
     if (username && sameUser(e.username, username)) update = e;
   }
-  if (!username && candidates.length === 1) update = candidates[0];
   const offer = { id: update?.id, name: update?.name || url.hostname, username: update?.username ?? username, password, host: url.hostname, url: url.origin, ts: Date.now() };
   await session.set({ [`offer:${sender.tab.id}`]: offer });
   // a login inside an iframe: show the prompt in the page itself, not in the (small) frame
@@ -284,15 +294,16 @@ async function captured({ username = '', password }, sender) {
   return { offer: publicOffer(offer) };
 }
 
+// Offers stay bound to the site that produced them: another site in the same tab can neither show nor confirm them.
 async function pendingOffer(sender) {
   const key = `offer:${sender.tab.id}`, { [key]: o } = await session.get(key);
-  return { offer: o && Date.now() - o.ts < OFFER_TTL ? publicOffer(o) : null };
+  return { offer: o && Date.now() - o.ts < OFFER_TTL && siteOf(o.url) === siteOf(sender.url) ? publicOffer(o) : null };
 }
 
 async function offerAction({ action, name, username }, sender) {
   const key = `offer:${sender.tab.id}`, { [key]: o } = await session.get(key);
+  if (!o || siteOf(o.url) !== siteOf(sender.url)) return {};
   await session.remove([key, `step:${sender.tab.id}`]);
-  if (!o) return {};
   if (action === 'never') {
     const { neverSave = [] } = await local.get('neverSave');
     await local.set({ neverSave: [...new Set([...neverSave, o.host])] });
@@ -330,7 +341,7 @@ async function search({ q, tabId }) {
 // Explicit user choice in the popup, so the entry need not match; only the top frame gets it.
 async function fillTab({ id, tabId, remember }) {
   const { url } = await chrome.tabs.get(tabId);
-  const msg = { type: 'fillCred', ...(await credentials(id)) };
+  const msg = { type: 'fillCred', origin: new URL(url).origin, ...(await credentials(id)) }; // receiver checks the origin: no redirect race
   await chrome.tabs.sendMessage(tabId, msg, { frameId: 0 }).catch(async () => {
     // tab predates the content script (opened before install/reload): inject and retry
     try { await injectContent(tabId); } catch { throw new Error('Auf dieser Seite kann nicht ausgefüllt werden'); }
@@ -391,9 +402,9 @@ const popupOnly = {
   removePin: async () => { await local.remove(['pinEnc', 'pinSalt']); await session.remove(['pinWrapped', 'pinTries']); return {}; },
   removeTouchId: async () => { await local.remove('touchId'); return {}; },
   logout: async () => {
-    const { deviceId } = await local.get('deviceId');
+    const { deviceId, kdfPins } = await local.get(['deviceId', 'kdfPins']);
     await local.clear(); await session.clear();
-    await local.set({ deviceId });
+    await local.set({ deviceId, kdfPins });
     ws?.close();
     return {};
   },

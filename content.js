@@ -110,7 +110,7 @@
       const enter = document.createElement('span');
       enter.className = 'enter'; enter.textContent = '↵';
       li.append(av, txt, enter);
-      li.addEventListener('mousedown', (e) => { e.preventDefault(); choose(i); });
+      li.addEventListener('mousedown', (e) => { e.preventDefault(); if (e.isTrusted) choose(i); });
       li.addEventListener('mousemove', () => { if (sel !== i) { sel = i; render(); } });
       return li;
     }));
@@ -124,12 +124,12 @@
     const found = otp ? (res.items || []).map((it) => ({ ...it, totp: true, username: `${it.code.replace(/(\d{3})(?=\d)/g, '$1 ')} · ${it.username || 'Code'}` })) : res.items || [];
     all = [...(isNewPassword(el) ? [GEN] : []), ...(res.locked ? [LOCKED] : found)];
     field = el;
-    filter();
+    filter(); // unfiltered on open: a page could pre-set the value to probe entry names
   }
 
-  // Narrow suggestions to what is typed in the field (never by a password field's value).
-  function filter() {
-    const q = field.type === 'password' ? '' : field.value.trim().toLowerCase();
+  // Narrow suggestions to what the user typed (never by a password field's value).
+  function filter(typed = '') {
+    const q = field.type === 'password' ? '' : typed.trim().toLowerCase();
     items = all.filter((it) => it.locked || it.gen || it.totp || !q || it.name.toLowerCase().includes(q) || it.username?.toLowerCase().includes(q));
     if (!items.length) return hide();
     target = field; sel = 0;
@@ -180,7 +180,7 @@
     if (msg.type === 'showOffer') { showOffer(msg.offer); return reply({}); }
     const el = loginField();
     if (msg.type === 'fillCred') {
-      if (el) fillFields(el, msg);
+      if (el && msg.origin === location.origin) fillFields(el, msg); // page may have navigated since the popup opened
       return reply({});
     }
     if (msg.type !== 'hotkey' || !el || (document.activeElement !== el && (window !== top || document.activeElement?.tagName === 'IFRAME'))) return;
@@ -209,13 +209,14 @@
   // typing an own password: get out of the way (the list would cover the submit button)
   document.addEventListener('input', (e) => {
     if (!e.isTrusted || e.target !== field || document.activeElement !== field) return;
-    if (field.type === 'password') hide(); else filter();
+    if (field.type === 'password') hide(); else filter(field.value);
   }, true);
   document.addEventListener('focusout', (e) => { if (e.target === target) hide(); }, true);
   document.addEventListener('scroll', hide, true);
   window.addEventListener('resize', hide);
+  // isTrusted: a page must not drive the list with synthetic key events (Enter would fill and hand it the password)
   document.addEventListener('keydown', (e) => {
-    if (host.style.display === 'none' || e.target !== target) return;
+    if (!e.isTrusted || host.style.display === 'none' || e.target !== target) return;
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') sel = (sel + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length, render();
     else if (e.key === 'Enter') choose(sel);
     else if (e.key === 'Escape') hide();
@@ -242,6 +243,8 @@
   let lastCapture = '';
   function capture(scope) {
     if (host.style.display !== 'none') return; // Enter/click belongs to our dropdown
+    // only real user submits: a script could otherwise submit chosen passwords (to overwrite entries or probe them)
+    if (navigator.userActivation && !navigator.userActivation.isActive) return;
     scope ||= document;
     const pws = [...scope.querySelectorAll('input[type=password]')].filter((p) => p.value);
     if (!pws.length) { // first step of a two-step login: remember the username for the password page
@@ -289,7 +292,8 @@
       input { font:inherit; font-weight:400; color:var(--fg); background:var(--field); border:1px solid transparent; border-radius:9px; padding:7px 10px; outline:none; }
       input:focus { border-color:var(--acc); }
       .row { display:flex; gap:8px; }
-      button.b { flex:1; font:inherit; font-weight:600; border:0; border-radius:9px; padding:8px 10px; cursor:pointer; }
+      button.b { flex:1; font:inherit; font-weight:600; border:0; border-radius:9px; padding:8px 10px; cursor:pointer; transition:opacity .2s; }
+      button.b:disabled { opacity:.5; cursor:default; }
       .primary { background:linear-gradient(135deg,#3b82f6,#6d28d9); color:#fff; }
       .ghost { background:var(--field); color:var(--fg); }
       .err { color:#e5484d; font-size:12px; margin:0; } .err:empty { display:none; }
@@ -305,7 +309,7 @@
     const $ = (s) => cardRoot.querySelector(s);
     const update = o.kind === 'update';
     $('b').textContent = update ? 'Passwort aktualisieren?' : 'Login speichern?';
-    $('.t span').textContent = update ? `${o.name} · ${o.username || o.host}` : o.host;
+    $('.t span').textContent = update ? `${o.name} · ${o.username} · ${o.host}` : o.host;
     $('.save').textContent = update ? 'Aktualisieren' : 'Speichern';
     $('[name=name]').value = o.name;
     $('[name=username]').value = o.username || '';
@@ -317,8 +321,10 @@
       cardRoot.querySelector('.card').replaceChildren(Object.assign(document.createElement('b'), { textContent: update ? '✓ Passwort aktualisiert' : '✓ Login gespeichert' }));
       setTimeout(() => card.remove(), 1400);
     };
-    $('.save').onclick = () => act('save');
-    $('.never').onclick = () => act('never');
+    // buttons arm after a moment so a click aimed at the page underneath cannot land on them
+    for (const b of cardRoot.querySelectorAll('button.b')) { b.disabled = true; setTimeout(() => (b.disabled = false), 600); }
+    $('.save').onclick = (e) => e.isTrusted && act('save');
+    $('.never').onclick = (e) => e.isTrusted && act('never');
     $('.x').onclick = () => act('dismiss');
     cardRoot.addEventListener('keydown', (e) => { if (e.key === 'Escape') act('dismiss'); if (e.key === 'Enter') act('save'); });
     document.documentElement.append(card);

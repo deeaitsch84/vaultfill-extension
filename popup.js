@@ -88,7 +88,8 @@ async function search() {
       el('div', { textContent: q ? 'Nichts gefunden' : 'Keine Logins für diese Seite' }),
       el('div', { textContent: q ? 'Anderen Suchbegriff versuchen' : 'Oben suchen, um einen Eintrag zu füllen', style: 'font-size:12px' }))));
   }
-  $('#rememberRow').hidden = !res.items.some((it) => !it.matches);
+  $('#rememberRow').hidden = !res.host || !res.items.some((it) => !it.matches);
+  $('#rememberHost').textContent = res.host || '';
 }
 
 async function fillTab(id) {
