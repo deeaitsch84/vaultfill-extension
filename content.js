@@ -77,12 +77,12 @@
     .user { color:var(--mute); font-size:12px; }
     .enter { color:var(--acc); font-size:15px; opacity:0; }
     li[aria-selected=true] .enter { opacity:1; }
-  </style><div class="box"><div class="head"><div class="logo"><svg viewBox="0 0 128 128"><circle cx="64" cy="41" r="22"/><path d="M71 49 L48 83 H62 L54 111 L84 69 H69 L78 49 Z"/></svg></div><span>Vaultfill</span><kbd>↑↓</kbd><kbd>⏎</kbd></div><ul role="listbox" aria-label="Zugangsdaten"></ul></div>`;
+  </style><div class="box"><div class="head"><div class="logo"><svg viewBox="0 0 128 128"><circle cx="64" cy="41" r="22"/><path d="M71 49 L48 83 H62 L54 111 L84 69 H69 L78 49 Z"/></svg></div><span>Vaultfill</span><kbd>↑↓</kbd><kbd>⏎</kbd></div><ul role="listbox" aria-label="Credentials"></ul></div>`;
   const list = root.querySelector('ul');
   const LOCK = '<svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
   const KEY = '<svg viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3M17 6l3 3M14 9l2 2"/></svg>';
-  const GEN = { gen: true, name: 'Starkes Passwort generieren', username: 'Füllt Passwort und Wiederholung' };
-  const LOCKED = { locked: true, name: 'Vault gesperrt', username: 'Klicken zum Entsperren' };
+  const GEN = { gen: true, name: 'Generate strong password', username: 'Fills password and confirmation' };
+  const LOCKED = { locked: true, name: 'Vault locked', username: 'Click to unlock' };
 
   let target = null, field = null, all = [], items = [], sel = 0; // all = suggestions for `field`, items = filtered view
 
@@ -234,7 +234,7 @@
     if (cred.error) return;
     await navigator.clipboard.writeText(it.totp ? cred.code : password ? cred.password : cred.username);
     const user = list.children[i]?.querySelector('.user');
-    if (user) user.textContent = `✓ ${it.totp ? '2FA-Code' : password ? 'Passwort' : 'Benutzername'} kopiert`;
+    if (user) user.textContent = `✓ ${it.totp ? '2FA code' : password ? 'Password' : 'Username'} copied`;
     setTimeout(() => target && render(), 1200);
   }
 
@@ -300,17 +300,17 @@
     </style>
     <div class="card" role="dialog" aria-label="Vaultfill">
       <div class="head"><div class="logo"><svg viewBox="0 0 128 128"><circle cx="64" cy="41" r="22"/><path d="M71 49 L48 83 H62 L54 111 L84 69 H69 L78 49 Z"/></svg></div>
-        <div class="t"><b></b><span></span></div><button class="x" aria-label="Schließen">×</button></div>
+        <div class="t"><b></b><span></span></div><button class="x" aria-label="Close">×</button></div>
       <label class="nameL">Name<input name="name"></label>
-      <label class="userL">Benutzername<input name="username"></label>
+      <label class="userL">Username<input name="username"></label>
       <p class="err"></p>
-      <div class="row"><button class="b ghost never">Nie für diese Seite</button><button class="b primary save"></button></div>
+      <div class="row"><button class="b ghost never">Never for this site</button><button class="b primary save"></button></div>
     </div>`;
     const $ = (s) => cardRoot.querySelector(s);
     const update = o.kind === 'update';
-    $('b').textContent = update ? 'Passwort aktualisieren?' : 'Login speichern?';
+    $('b').textContent = update ? 'Update password?' : 'Save login?';
     $('.t span').textContent = update ? `${o.name} · ${o.username} · ${o.host}` : o.host;
-    $('.save').textContent = update ? 'Aktualisieren' : 'Speichern';
+    $('.save').textContent = update ? 'Update' : 'Save';
     $('[name=name]').value = o.name;
     $('[name=username]').value = o.username || '';
     $('.nameL').hidden = $('.userL').hidden = update;
@@ -318,7 +318,7 @@
       const res = await chrome.runtime.sendMessage({ type: 'offerAction', action, name: $('[name=name]').value, username: $('[name=username]').value }).catch((e) => ({ error: e.message }));
       if (res?.error) { $('.err').textContent = res.error; return; }
       if (action !== 'save') return card.remove();
-      cardRoot.querySelector('.card').replaceChildren(Object.assign(document.createElement('b'), { textContent: update ? '✓ Passwort aktualisiert' : '✓ Login gespeichert' }));
+      cardRoot.querySelector('.card').replaceChildren(Object.assign(document.createElement('b'), { textContent: update ? '✓ Password updated' : '✓ Login saved' }));
       setTimeout(() => card.remove(), 1400);
     };
     // buttons arm after a moment so a click aimed at the page underneath cannot land on them

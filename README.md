@@ -33,8 +33,6 @@ No opening the popup, no searching, no "Fill" button.
 | 🔄 **Live sync** | Changes from other clients arrive within seconds via Vaultwarden's notification hub. |
 | 📋 **⌘C / ⌘⇧C** | Copy the username or password of the highlighted entry. |
 
-> The user interface is currently in German.
-
 ## 📸 Screenshots
 
 <table>
@@ -56,7 +54,7 @@ No opening the popup, no searching, no "Fill" button.
 
 1. Clone the repository.
 2. `chrome://extensions` → enable **Developer mode** → **Load unpacked** → select the folder.
-3. Vaultfill icon → server URL, e-mail, master password → **Anmelden** (sign in).
+3. Vaultfill icon → server URL, e-mail, master password → **Sign in**.
 4. Optional: `chrome://extensions/shortcuts` → check the shortcut (default ⌘⇧L, Ctrl+Shift+L on Windows/Linux).
 
 > No `npm install`, no bundler: Chrome loads the folder as it is.

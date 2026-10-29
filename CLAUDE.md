@@ -42,7 +42,7 @@ Any change touching these needs a test that would fail if the guarantee broke.
 - **`vault.js` is shared**: change it in both repos in the same way and keep the files identical (`cmp`). Same for its unit tests.
 - **No build step, no runtime dependencies** besides the vendored `lib/`. Dev tooling only if it pays for itself.
 - **Crypto**: WebCrypto only. No hand-rolled primitives beyond the Bitwarden formats already in `vault.js`.
-- **Code** and comments in English; **UI text** in German. Comments explain *why*, not what.
+- **Everything in English**: code, comments, UI text, docs, issues. Comments explain *why*, not what.
 - **Commits**: Conventional Commits in English (`feat:`, `fix(security):`, `docs:`, `test:`), one logical change per commit, body explains the reason.
 - **Git**: never rewrite `main` or tags; no force pushes. Feature work on branches, merge via PR.
 

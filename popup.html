@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <title>Vaultfill</title>
@@ -118,47 +118,47 @@
 
   <!-- login -->
   <form id="login" class="auth" hidden>
-    <div class="hero"><img src="icons/icon128.png" alt=""><h1>Bei Vaultwarden anmelden</h1><p>Bei SSO öffnet sich danach ein Tab.</p></div>
+    <div class="hero"><img src="icons/icon128.png" alt=""><h1>Sign in to Vaultwarden</h1><p>With SSO a new tab opens next.</p></div>
     <input name="server" type="url" placeholder="https://vault.example.com" aria-label="Server" required>
-    <input name="email" type="email" placeholder="E-Mail" aria-label="E-Mail" autocomplete="username" required>
-    <input name="password" type="password" placeholder="Master-Passwort" aria-label="Master-Passwort" autocomplete="current-password" required>
-    <button class="btn primary block">Anmelden</button>
+    <input name="email" type="email" placeholder="E-mail" aria-label="E-mail" autocomplete="username" required>
+    <input name="password" type="password" placeholder="Master password" aria-label="Master password" autocomplete="current-password" required>
+    <button class="btn primary block">Sign in</button>
   </form>
 
   <!-- 2FA -->
   <form id="totp" class="auth" hidden>
-    <div class="hero"><img src="icons/icon128.png" alt=""><h1>Zwei-Faktor-Code</h1><p id="totpHint"></p></div>
-    <input name="totp" placeholder="123 456" aria-label="2FA-Code" autocomplete="one-time-code" inputmode="numeric" required style="text-align:center;font-size:18px;letter-spacing:.2em">
-    <button class="btn primary block">Bestätigen</button>
-    <button type="button" class="btn danger" data-act="lock">Abbrechen</button>
+    <div class="hero"><img src="icons/icon128.png" alt=""><h1>Two-factor code</h1><p id="totpHint"></p></div>
+    <input name="totp" placeholder="123 456" aria-label="2FA code" autocomplete="one-time-code" inputmode="numeric" required style="text-align:center;font-size:18px;letter-spacing:.2em">
+    <button class="btn primary block">Confirm</button>
+    <button type="button" class="btn danger" data-act="lock">Cancel</button>
   </form>
 
   <!-- unlock -->
   <form id="unlock" class="auth" hidden>
-    <div class="hero"><img src="icons/icon128.png" alt=""><h1>Vault gesperrt</h1><p id="who"></p></div>
-    <button type="button" class="btn primary block" id="touch" hidden><svg><use href="#i-finger"/></svg>Mit Touch ID entsperren</button>
-    <div class="or" id="or" hidden>oder</div>
+    <div class="hero"><img src="icons/icon128.png" alt=""><h1>Vault locked</h1><p id="who"></p></div>
+    <button type="button" class="btn primary block" id="touch" hidden><svg><use href="#i-finger"/></svg>Unlock with Touch ID</button>
+    <div class="or" id="or" hidden>or</div>
     <div class="inline">
-      <input name="password" type="password" autocomplete="current-password" aria-label="PIN oder Master-Passwort" required>
-      <button class="btn soft" aria-label="Entsperren"><svg><use href="#i-arrow"/></svg></button>
+      <input name="password" type="password" autocomplete="current-password" aria-label="PIN or master password" required>
+      <button class="btn soft" aria-label="Unlock"><svg><use href="#i-arrow"/></svg></button>
     </div>
-    <button type="button" class="btn danger" data-act="logout">Abmelden</button>
+    <button type="button" class="btn danger" data-act="logout">Sign out</button>
   </form>
 
   <!-- header for unlocked views -->
   <header class="bar" id="bar" hidden>
     <div class="brand"><img src="icons/icon128.png" alt="">Vaultfill</div>
-    <button type="button" class="icon-btn" id="syncBtn" title="Synchronisieren" aria-label="Synchronisieren"><svg><use href="#i-sync"/></svg></button>
-    <button type="button" class="icon-btn" data-act="lock" title="Sperren" aria-label="Sperren"><svg><use href="#i-lock"/></svg></button>
-    <button type="button" class="icon-btn" id="gear" title="Einstellungen" aria-label="Einstellungen"><svg><use href="#i-gear"/></svg></button>
+    <button type="button" class="icon-btn" id="syncBtn" title="Sync" aria-label="Sync"><svg><use href="#i-sync"/></svg></button>
+    <button type="button" class="icon-btn" data-act="lock" title="Lock" aria-label="Lock"><svg><use href="#i-lock"/></svg></button>
+    <button type="button" class="icon-btn" id="gear" title="Settings" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
   </header>
 
   <!-- vault -->
   <section id="open" hidden>
-    <div class="search field"><svg style="left:23px"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Alle Einträge durchsuchen" aria-label="Einträge suchen" autocomplete="off"></div>
+    <div class="search field"><svg style="left:23px"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Search all entries" aria-label="Search entries" autocomplete="off"></div>
     <div class="label" id="listLabel"></div>
-    <ul id="results" aria-label="Einträge"></ul>
-    <label class="check" id="rememberRow" hidden><input type="checkbox" id="remember"> <span><b id="rememberHost"></b> beim Eintrag speichern</span></label>
+    <ul id="results" aria-label="Entries"></ul>
+    <label class="check" id="rememberRow" hidden><input type="checkbox" id="remember"> <span>Remember <b id="rememberHost"></b> for this entry</span></label>
     <div class="foot"><span class="dot"></span><span id="info"></span></div>
   </section>
 
@@ -168,26 +168,26 @@
       <div class="card">
         <div class="card-head">
           <span class="ico"><svg><use href="#i-finger"/></svg></span>
-          <div class="t"><b>Touch ID</b><span>Entsperren per Fingerabdruck</span></div>
+          <div class="t"><b>Touch ID</b><span>Unlock with your fingerprint</span></div>
           <span class="pill" id="touchPill"></span>
         </div>
-        <button type="button" class="btn soft block" id="touchEnroll">Einrichten</button>
-        <button type="button" class="btn danger" data-act="removeTouchId" id="touchRemove">Entfernen</button>
+        <button type="button" class="btn soft block" id="touchEnroll">Set up</button>
+        <button type="button" class="btn danger" data-act="removeTouchId" id="touchRemove">Remove</button>
       </div>
       <div class="card">
         <div class="card-head">
           <span class="ico"><svg><use href="#i-key"/></svg></span>
-          <div class="t"><b>PIN</b><span>Gilt bis zum Browser-Neustart</span></div>
+          <div class="t"><b>PIN</b><span>Valid until the browser restarts</span></div>
           <span class="pill" id="pinPill"></span>
         </div>
         <div class="inline">
-          <input id="pin" type="password" inputmode="numeric" placeholder="Neue PIN (min. 4 Ziffern)" aria-label="Neue PIN" autocomplete="off">
-          <button type="button" class="btn soft" id="pinSet">Setzen</button>
+          <input id="pin" type="password" inputmode="numeric" placeholder="New PIN (min. 4 digits)" aria-label="New PIN" autocomplete="off">
+          <button type="button" class="btn soft" id="pinSet">Set</button>
         </div>
-        <button type="button" class="btn danger" data-act="removePin" id="pinRemove">Entfernen</button>
+        <button type="button" class="btn danger" data-act="removePin" id="pinRemove">Remove</button>
       </div>
-      <p class="meta">Auto-Sperre nach 30 min Leerlauf oder bei Bildschirmsperre. <span id="shortcut"></span></p>
-      <button type="button" class="btn soft block" data-act="logout"><svg><use href="#i-logout"/></svg>Abmelden</button>
+      <p class="meta">Auto-lock after 30 min idle or on screen lock. <span id="shortcut"></span></p>
+      <button type="button" class="btn soft block" data-act="logout"><svg><use href="#i-logout"/></svg>Sign out</button>
     </div>
   </section>
 

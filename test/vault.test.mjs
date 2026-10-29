@@ -54,9 +54,9 @@ test('registrableDomain (Public Suffix List)', () => {
 });
 
 test('checkKdf', () => {
-  assert.throws(() => v.checkKdf({ kdf: 0, kdfIterations: 1 }), /Unsicher/);
-  assert.throws(() => v.checkKdf({ kdf: 1, kdfIterations: 3, kdfMemory: 1, kdfParallelism: 4 }), /Unsicher/);
-  assert.throws(() => v.checkKdf({ kdf: 0, kdfIterations: 200000 }, { kdf: 0, kdfIterations: 600000 }), /schwächer/);
+  assert.throws(() => v.checkKdf({ kdf: 0, kdfIterations: 1 }), /Insecure/);
+  assert.throws(() => v.checkKdf({ kdf: 1, kdfIterations: 3, kdfMemory: 1, kdfParallelism: 4 }), /Insecure/);
+  assert.throws(() => v.checkKdf({ kdf: 0, kdfIterations: 200000 }, { kdf: 0, kdfIterations: 600000 }), /weaker/);
   assert.doesNotThrow(() => v.checkKdf({ kdf: 0, kdfIterations: 600000 }, { kdf: 0, kdfIterations: 600000 }));
   assert.doesNotThrow(() => v.checkKdf({ kdf: 1, kdfIterations: 3, kdfMemory: 64, kdfParallelism: 4 }));
 });

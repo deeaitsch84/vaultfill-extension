@@ -2,13 +2,13 @@
   "manifest_version": 3,
   "name": "Vaultfill",
   "version": "0.1.0",
-  "description": "Schlanker Vaultwarden-Autofill: schlägt passende Zugangsdaten direkt am Login-Feld vor.",
+  "description": "Lean Vaultwarden autofill: suggests matching logins right at the login field.",
   "minimum_chrome_version": "127",
   "permissions": ["storage", "alarms", "idle", "favicon", "scripting", "clipboardWrite"],
   "commands": {
     "fill": {
       "suggested_key": { "default": "Ctrl+Shift+L", "mac": "Command+Shift+L" },
-      "description": "Login ausfüllen / Vorschläge zeigen"
+      "description": "Fill login / show suggestions"
     }
   },
   "host_permissions": ["<all_urls>"],

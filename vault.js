@@ -97,10 +97,10 @@ export async function resolveServer(input) {
     const r = await fetch(`${c}/api/config`).catch(() => null);
     if (!r?.ok) continue;
     const final = new URL(r.url);
-    if (final.protocol !== 'https:' && !LOCAL_HOST.test(final.hostname)) throw new Error('Server leitet auf unverschlüsseltes http um – abgebrochen');
+    if (final.protocol !== 'https:' && !LOCAL_HOST.test(final.hostname)) throw new Error('Server redirects to unencrypted http – aborted');
     return r.url.replace(/\/api\/config$/, '');
   }
-  throw new Error(`Kein Vaultwarden unter ${url} erreichbar (nur https, http nur für lokale Server)`);
+  throw new Error(`No Vaultwarden reachable at ${url} (https only; http only for local servers)`);
 }
 
 // A malicious server could hand out a weak KDF to make the master password hash cheap to crack:
@@ -109,9 +109,9 @@ export function checkKdf(k, pinned) {
   const ok = k.kdf === 0 ? k.kdfIterations >= 100_000 && k.kdfIterations <= 2_000_000
     : k.kdf === 1 ? k.kdfIterations >= 2 && k.kdfIterations <= 10 && k.kdfMemory >= 16 && k.kdfMemory <= 1024 && k.kdfParallelism >= 1 && k.kdfParallelism <= 16
       : false;
-  if (!ok) throw new Error('Unsichere oder ungültige KDF-Einstellungen vom Server – Anmeldung abgebrochen');
+  if (!ok) throw new Error('Insecure or invalid KDF settings from the server – sign-in aborted');
   const weaker = pinned && (k.kdf !== pinned.kdf || k.kdfIterations < pinned.kdfIterations || (k.kdfMemory || 0) < (pinned.kdfMemory || 0));
-  if (weaker) throw new Error('Der Server meldet schwächere KDF-Einstellungen als beim letzten Login – Anmeldung abgebrochen');
+  if (weaker) throw new Error('The server reports weaker KDF settings than at the last sign-in – sign-in aborted');
 }
 
 export const prelogin = (server, email) => request(`${server}/identity/accounts/prelogin`, {
@@ -185,7 +185,7 @@ export async function totp(secret, now = Date.now()) {
   let bits = '';
   for (const ch of key.toUpperCase().replace(/[\s=-]/g, '')) {
     const i = alphabet.indexOf(ch);
-    if (i < 0) throw new Error('Ungültiger TOTP-Schlüssel');
+    if (i < 0) throw new Error('Invalid TOTP secret');
     bits += i.toString(2).padStart(5, '0');
   }
   const raw = Uint8Array.from(bits.match(/.{8}/g) || [], (b) => parseInt(b, 2));

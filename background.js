@@ -24,7 +24,7 @@ async function sync() {
 
 const sessionUserKey = async () => {
   const { userKey } = await session.get('userKey');
-  if (!userKey) throw new Error('Vault gesperrt');
+  if (!userKey) throw new Error('Vault locked');
   return v.toKey(v.unb64(userKey));
 };
 
@@ -56,7 +56,7 @@ async function finishLogin(p, grant, { totp, provider } = {}) {
     if (!providers.length) throw e;
     // 0 = authenticator app, 1 = email; hardware keys / WebAuthn are not supported here.
     const prov = [0, 1].find((x) => providers.includes(x));
-    if (prov === undefined) throw new Error('Nur TOTP- oder E-Mail-2FA wird unterstützt');
+    if (prov === undefined) throw new Error('Only TOTP or e-mail 2FA is supported');
     await session.set({ pending: { ...p, grant, provider: prov } });
     return { needTotp: true, provider: prov };
   }
@@ -116,7 +116,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, { url }) => {
   const q = new URL(url).searchParams;
   let res;
   try {
-    if (q.get('state') !== sso.state) throw new Error('SSO: state stimmt nicht');
+    if (q.get('state') !== sso.state) throw new Error('SSO: state mismatch');
     res = await finishLogin(sso, { grant_type: 'authorization_code', code: q.get('code'), code_verifier: sso.verifier, redirect_uri: sso.redirect });
   } catch (e) {
     res = { error: e.message };
@@ -140,7 +140,7 @@ async function unlock({ password }) {
     catch {
       if (pinWrapped && pinTries + 1 >= PIN_MAX_TRIES) await session.remove(['pinWrapped', 'pinTries']);
       else if (pinWrapped) await session.set({ pinTries: pinTries + 1 });
-      throw new Error(pinWrapped ? 'Falsche PIN / falsches Master-Passwort' : 'Falsches Master-Passwort');
+      throw new Error(pinWrapped ? 'Wrong PIN or master password' : 'Wrong master password');
     }
   }
   await openVault(userKey);
@@ -149,7 +149,7 @@ async function unlock({ password }) {
 }
 
 async function setPin({ pin }) {
-  if (!/^\d{4,}$/.test(pin)) throw new Error('PIN: mindestens 4 Ziffern');
+  if (!/^\d{4,}$/.test(pin)) throw new Error('PIN: at least 4 digits');
   const userKey = await sessionUserKey(), salt = v.b64(crypto.getRandomValues(new Uint8Array(16)));
   await local.set({ pinEnc: await v.encryptStr(pin, userKey), pinSalt: salt });
   await armPin(pin, userKey, salt);
@@ -168,7 +168,7 @@ async function unlockTouchId({ secret }) {
   const { touchId } = await local.get('touchId');
   let userKey;
   try { userKey = v.toKey(await v.decrypt(touchId.wrapped, await v.stretch(v.unb64(secret)))); }
-  catch { throw new Error('Touch ID passt nicht mehr – bitte neu einrichten'); }
+  catch { throw new Error('Touch ID no longer matches – please set it up again'); }
   await openVault(userKey);
   sync().catch((e) => console.warn('sync', e));
   return {};
@@ -344,7 +344,7 @@ async function fillTab({ id, tabId, remember }) {
   const msg = { type: 'fillCred', origin: new URL(url).origin, ...(await credentials(id)) }; // receiver checks the origin: no redirect race
   await chrome.tabs.sendMessage(tabId, msg, { frameId: 0 }).catch(async () => {
     // tab predates the content script (opened before install/reload): inject and retry
-    try { await injectContent(tabId); } catch { throw new Error('Auf dieser Seite kann nicht ausgefüllt werden'); }
+    try { await injectContent(tabId); } catch { throw new Error('Cannot fill on this page'); }
     return chrome.tabs.sendMessage(tabId, msg, { frameId: 0 });
   });
   const { index } = await session.get('index');

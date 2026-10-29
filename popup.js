@@ -40,23 +40,23 @@ async function render() {
   for (const id of ['login', 'totp', 'unlock', 'open', 'settings']) $(`#${id}`).hidden = id !== view;
   $('#bar').hidden = !['open', 'settings'].includes(view);
   $('#gear').replaceChildren(icon(showSettings ? 'back' : 'gear'));
-  $('#gear').title = $('#gear').ariaLabel = showSettings ? 'Zurück' : 'Einstellungen';
+  $('#gear').title = $('#gear').ariaLabel = showSettings ? 'Back' : 'Settings';
 
-  $('#totpHint').textContent = st.pendingTotp === 1 ? 'Code aus der E-Mail eingeben' : 'Code aus der Authenticator-App eingeben';
+  $('#totpHint').textContent = st.pendingTotp === 1 ? 'Enter the code from the e-mail' : 'Enter the code from your authenticator app';
   $('#who').textContent = st.email;
-  $('#unlock').password.placeholder = st.pinArmed ? 'PIN oder Master-Passwort' : 'Master-Passwort';
+  $('#unlock').password.placeholder = st.pinArmed ? 'PIN or master password' : 'Master password';
   $('#touch').hidden = $('#or').hidden = !st.touchId;
-  $('#touchPill').textContent = st.touchId ? 'Aktiv' : 'Aus';
+  $('#touchPill').textContent = st.touchId ? 'On' : 'Off';
   $('#touchPill').classList.toggle('on', !!st.touchId);
   $('#touchEnroll').hidden = !!st.touchId;
   $('#touchRemove').hidden = !st.touchId;
-  $('#pinPill').textContent = st.pin ? 'Aktiv' : 'Aus';
+  $('#pinPill').textContent = st.pin ? 'On' : 'Off';
   $('#pinPill').classList.toggle('on', st.pin);
   $('#pinRemove').hidden = !st.pin;
-  $('#info').textContent = `${st.count} Logins · synchronisiert ${new Date(st.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  $('#info').textContent = `${st.count} logins · synced ${new Date(st.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   if (st.loginError) $('#err').textContent = st.loginError;
   const key = (await chrome.commands.getAll()).find((c) => c.name === 'fill')?.shortcut;
-  $('#shortcut').textContent = key ? `Kürzel ${key} – ändern unter chrome://extensions/shortcuts.` : 'Kein Tastenkürzel belegt – unter chrome://extensions/shortcuts festlegen.';
+  $('#shortcut').textContent = key ? `Shortcut ${key} – change it at chrome://extensions/shortcuts.` : 'No shortcut assigned – set one at chrome://extensions/shortcuts.';
 
   if (view === 'open') {
     if (isWin && params.get('do') !== 'enroll') return done();
@@ -78,15 +78,15 @@ async function search() {
   const q = $('#q').value.trim();
   const res = await send({ type: 'search', q, tabId });
   if (!res) return;
-  $('#listLabel').replaceChildren(...(q ? ['Suchergebnisse'] : res.host ? ['Für', el('b', { textContent: res.host })] : ['Diese Seite']));
+  $('#listLabel').replaceChildren(...(q ? ['Search results'] : res.host ? ['For', el('b', { textContent: res.host })] : ['This page']));
   $('#results').replaceChildren(...res.items.map((it) => el('li', { tabIndex: 0, dataset: { id: it.id }, onclick: () => fillTab(it.id), onkeydown: (e) => e.key === 'Enter' && fillTab(it.id) },
     el('span', { className: 'ico' }, it.site ? favicon(it.site) : icon('globe')),
     el('span', { className: 'txt' }, el('div', { className: 'name', textContent: it.name }), el('div', { className: 'user', textContent: it.username || '—' })),
     el('span', { className: 'go' }, icon('arrow')))));
   if (!res.items.length) {
     $('#results').append(el('li', { className: 'empty' }, el('div', {}, icon(q ? 'search' : 'globe'),
-      el('div', { textContent: q ? 'Nichts gefunden' : 'Keine Logins für diese Seite' }),
-      el('div', { textContent: q ? 'Anderen Suchbegriff versuchen' : 'Oben suchen, um einen Eintrag zu füllen', style: 'font-size:12px' }))));
+      el('div', { textContent: q ? 'Nothing found' : 'No logins for this page' }),
+      el('div', { textContent: q ? 'Try a different search' : 'Search above to fill an entry', style: 'font-size:12px' }))));
   }
   $('#rememberRow').hidden = !res.host || !res.items.some((it) => !it.matches);
   $('#rememberHost').textContent = res.host || '';
@@ -117,7 +117,7 @@ document.addEventListener('keydown', async (e) => {
   const cred = await send({ type: 'credentials', id });
   if (!cred) return;
   await navigator.clipboard.writeText(e.shiftKey ? cred.password : cred.username);
-  info(`${e.shiftKey ? 'Passwort' : 'Benutzername'} kopiert`);
+  info(`${e.shiftKey ? 'Password' : 'Username'} copied`);
 });
 
 $('#syncBtn').addEventListener('click', async () => {
@@ -141,7 +141,7 @@ async function prfSecret({ credId, salt }) {
     extensions: { prf: { eval: { first: unb64(salt) } } },
   } });
   const r = a.getClientExtensionResults().prf?.results?.first;
-  if (!r) throw new Error('Touch ID lieferte kein PRF-Ergebnis (Chrome/Authenticator unterstützt es nicht)');
+  if (!r) throw new Error('Touch ID returned no PRF result (not supported by Chrome/authenticator)');
   return b64(new Uint8Array(r));
 }
 
@@ -153,7 +153,7 @@ async function touchEnroll() {
       authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' },
       extensions: { prf: {} },
     } });
-    if (!cred.getClientExtensionResults().prf?.enabled) throw new Error('Touch ID ohne PRF-Unterstützung – nicht nutzbar');
+    if (!cred.getClientExtensionResults().prf?.enabled) throw new Error('Touch ID without PRF support – cannot be used');
     const p = { credId: b64(new Uint8Array(cred.rawId)), salt: b64(rnd(32)) };
     if (await send({ type: 'enrollTouchId', ...p, secret: await prfSecret(p) })) done();
   } catch (e) {
@@ -165,7 +165,7 @@ async function touchUnlock() {
   try {
     if (await send({ type: 'unlockTouchId', secret: await prfSecret(st.touchId) })) isWin ? done() : render();
   } catch (e) {
-    $('#err').textContent = e.name === 'NotAllowedError' ? 'Touch ID abgebrochen' : e.message;
+    $('#err').textContent = e.name === 'NotAllowedError' ? 'Touch ID cancelled' : e.message;
   }
 }
 
@@ -181,7 +181,7 @@ $('#pinSet').addEventListener('click', async () => {
 $('#login').addEventListener('submit', async (e) => {
   e.preventDefault();
   const res = await send({ type: 'login', ...Object.fromEntries(new FormData(e.target)) });
-  if (res?.sso) info('Anmeldung im neuen Tab abschließen …');
+  if (res?.sso) info('Finish signing in in the new tab …');
   else if (res) render();
 });
 
