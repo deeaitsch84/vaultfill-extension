@@ -1,6 +1,7 @@
 // Bitwarden/Vaultwarden protocol: KDF, EncString crypto, login, sync, URI matching.
 // Pure functions (fetch + WebCrypto only) so they run in the service worker and in Node tests.
 import './lib/argon2.umd.min.js'; // hash-wasm 4.12.0, sets globalThis.hashwasm
+import psl from './lib/psl.js';
 
 const te = new TextEncoder(), td = new TextDecoder();
 export const b64 = (bytes) => btoa(Array.from(bytes, (c) => String.fromCharCode(c)).join(''));
@@ -83,16 +84,34 @@ async function request(url, init) {
   return j;
 }
 
+// Local/LAN hosts may use plain http (dev servers, home NAS); everything else must be https.
+const LOCAL_HOST = /^(localhost|.+\.(local|lan|internal|home\.arpa)|127(\.\d+){3}|10(\.\d+){3}|192\.168(\.\d+){2}|172\.(1[6-9]|2\d|3[01])(\.\d+){2}|\[::1\])$/i;
+
 // Normalizes what the user typed: adds https://, prefers https over a typed http:// (some proxies answer
 // plain http with 404 instead of redirecting), follows redirects (moved host, path prefix) via /api/config.
 export async function resolveServer(input) {
   const url = input.trim().replace(/\/+$/, '');
-  const candidates = /^http:\/\//i.test(url) ? [url.replace(/^http:/i, 'https:'), url] : [/^https:\/\//i.test(url) ? url : `https://${url}`];
+  const https = /^https:\/\//i.test(url) ? url : `https://${url.replace(/^http:\/\//i, '')}`;
+  const candidates = /^http:\/\//i.test(url) && LOCAL_HOST.test(new URL(url).hostname) ? [https, url] : [https];
   for (const c of candidates) {
     const r = await fetch(`${c}/api/config`).catch(() => null);
-    if (r?.ok) return r.url.replace(/\/api\/config$/, '');
+    if (!r?.ok) continue;
+    const final = new URL(r.url);
+    if (final.protocol !== 'https:' && !LOCAL_HOST.test(final.hostname)) throw new Error('Server leitet auf unverschlüsseltes http um – abgebrochen');
+    return r.url.replace(/\/api\/config$/, '');
   }
-  throw new Error(`Kein Vaultwarden unter ${url} erreichbar`);
+  throw new Error(`Kein Vaultwarden unter ${url} erreichbar (nur https, http nur für lokale Server)`);
+}
+
+// A malicious server could hand out a weak KDF to make the master password hash cheap to crack:
+// enforce sane bounds, and never accept weaker settings than seen before for this account (pinned).
+export function checkKdf(k, pinned) {
+  const ok = k.kdf === 0 ? k.kdfIterations >= 100_000 && k.kdfIterations <= 2_000_000
+    : k.kdf === 1 ? k.kdfIterations >= 2 && k.kdfIterations <= 10 && k.kdfMemory >= 16 && k.kdfMemory <= 1024 && k.kdfParallelism >= 1 && k.kdfParallelism <= 16
+      : false;
+  if (!ok) throw new Error('Unsichere oder ungültige KDF-Einstellungen vom Server – Anmeldung abgebrochen');
+  const weaker = pinned && (k.kdf !== pinned.kdf || k.kdfIterations < pinned.kdfIterations || (k.kdfMemory || 0) < (pinned.kdfMemory || 0));
+  if (weaker) throw new Error('Der Server meldet schwächere KDF-Einstellungen als beim letzten Login – Anmeldung abgebrochen');
 }
 
 export const prelogin = (server, email) => request(`${server}/identity/accounts/prelogin`, {
@@ -236,24 +255,45 @@ export async function itemKey(cipher, state) {
   return cipher.key ? toKey(await decrypt(cipher.key, k)) : k;
 }
 
-// shortcut: tiny public-suffix heuristic (co.uk, com.au, ...); swap in the full PSL if wrong matches show up.
-const baseDomain = (host) => /^[\d.]+$|:/.test(host) ? host
-  : host.split('.').slice(/\.(co|com|net|org|gov|ac|edu)\.[a-z]{2}$/.test(host) ? -3 : -2).join('.');
+// Public Suffix List (incl. private suffixes like github.io): registrable domain = public suffix + one label.
+const SUFFIX = new Set(), WILDCARD = new Set(), EXCEPTION = new Set();
+for (const r of psl.split('\n')) {
+  if (r.startsWith('!')) EXCEPTION.add(r.slice(1));
+  else if (r.startsWith('*.')) WILDCARD.add(r.slice(2));
+  else SUFFIX.add(r);
+}
+
+// null when the host itself is a public suffix (e.g. "github.io")
+export function registrableDomain(host) {
+  const labels = host.toLowerCase().replace(/\.$/, '').split('.');
+  for (let i = 0; i < labels.length; i++) { // longest suffix first
+    const s = labels.slice(i).join('.');
+    if (EXCEPTION.has(s)) return s;
+    if (SUFFIX.has(s) || WILDCARD.has(labels.slice(i + 1).join('.'))) return i > 0 ? labels.slice(i - 1).join('.') : null;
+  }
+  return labels.slice(-2).join('.'); // unlisted TLD: default rule "*"
+}
+
+const baseDomain = (host) => /^[\d.]+$|:/.test(host) ? host : registrableDomain(host) ?? host;
+const parseUri = (uri) => { try { return new URL(/^[a-z][a-z\d+.-]*:\/\//i.test(uri) ? uri : `https://${uri}`); } catch { return null; } };
 
 // match: 0 base domain (default), 1 host, 2 starts with, 3 exact, 4 regex, 5 never
 export function uriMatches(uri, match, pageUrl) {
   if (!uri || !pageUrl) return false; // Chrome hides the URL of chrome:// and other non-permitted tabs
+  let p;
+  try { p = new URL(pageUrl); } catch { return false; }
   switch (match ?? 0) {
     case 1: case 0: {
-      let u;
-      try { u = new URL(/^[a-z][a-z\d+.-]*:\/\//i.test(uri) ? uri : `https://${uri}`); } catch { return false; }
-      let p;
-      try { p = new URL(pageUrl); } catch { return false; }
-      if (!/^https?:$/.test(u.protocol)) return false;
-      if (match === 1) return u.host === p.host;
-      return (!u.port || u.port === p.port) && baseDomain(u.hostname) === baseDomain(p.hostname);
+      const u = parseUri(uri);
+      if (!u || !/^https?:$/.test(u.protocol) || !/^https?:$/.test(p.protocol)) return false;
+      if (u.protocol === 'https:' && p.protocol !== 'https:') return false; // never offer https logins on an http page
+      if (u.port !== p.port) return false; // other port = other service
+      return match === 1 ? u.hostname === p.hostname : baseDomain(u.hostname) === baseDomain(p.hostname);
     }
-    case 2: return pageUrl.startsWith(uri);
+    case 2: { // same origin, then path prefix (a raw string prefix would let bank.com match bank.com.evil.net)
+      const u = parseUri(uri);
+      return !!u && u.origin === p.origin && p.href.startsWith(u.href);
+    }
     case 3: return pageUrl === uri;
     case 4: try { return new RegExp(uri, 'i').test(pageUrl); } catch { return false; }
     default: return false;

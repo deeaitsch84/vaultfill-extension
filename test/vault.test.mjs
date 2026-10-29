@@ -30,6 +30,35 @@ test('uriMatches', () => {
   assert.ok(!v.uriMatches('androidapp://com.example', 0, 'https://example.com/'));
   assert.ok(!v.uriMatches('https://example.com', 0, undefined));
   assert.ok(!v.uriMatches('https://example.com', 2, undefined));
+  // security review: shared-hosting tenants, downgrade, ports, prefix tricks
+  assert.ok(!v.uriMatches('https://victim.github.io', 0, 'https://evil.github.io/'));
+  assert.ok(!v.uriMatches('https://shop.myshopify.com', 0, 'https://evil.myshopify.com/'));
+  assert.ok(v.uriMatches('https://a.victim.github.io', 0, 'https://victim.github.io/'));
+  assert.ok(!v.uriMatches('https://bank.com', 0, 'http://bank.com/'));
+  assert.ok(v.uriMatches('http://intranet.lan', 0, 'https://intranet.lan/'));
+  assert.ok(!v.uriMatches('https://bank.com', 0, 'https://bank.com:8080/'));
+  assert.ok(!v.uriMatches('https://bank.com', 2, 'https://bank.com.evil.net/'));
+  assert.ok(!v.uriMatches('https://bank.com/login', 2, 'https://bank.com.evil/login'));
+  assert.ok(v.uriMatches('https://bank.com/login', 2, 'https://bank.com/login?next=1'));
+  assert.ok(!v.uriMatches('https://github.io', 0, 'https://evil.github.io/'));
+});
+
+test('registrableDomain (Public Suffix List)', () => {
+  assert.equal(v.registrableDomain('www.bbc.co.uk'), 'bbc.co.uk');
+  assert.equal(v.registrableDomain('evil.github.io'), 'evil.github.io');
+  assert.equal(v.registrableDomain('github.io'), null);
+  assert.equal(v.registrableDomain('a.b.example.com'), 'example.com');
+  assert.equal(v.registrableDomain('foo.bar.ck'), 'foo.bar.ck'); // *.ck wildcard
+  assert.equal(v.registrableDomain('www.ck'), 'www.ck'); // !www.ck exception
+  assert.equal(v.registrableDomain('x.y.unknowntld'), 'y.unknowntld');
+});
+
+test('checkKdf', () => {
+  assert.throws(() => v.checkKdf({ kdf: 0, kdfIterations: 1 }), /Unsicher/);
+  assert.throws(() => v.checkKdf({ kdf: 1, kdfIterations: 3, kdfMemory: 1, kdfParallelism: 4 }), /Unsicher/);
+  assert.throws(() => v.checkKdf({ kdf: 0, kdfIterations: 200000 }, { kdf: 0, kdfIterations: 600000 }), /schwächer/);
+  assert.doesNotThrow(() => v.checkKdf({ kdf: 0, kdfIterations: 600000 }, { kdf: 0, kdfIterations: 600000 }));
+  assert.doesNotThrow(() => v.checkKdf({ kdf: 1, kdfIterations: 3, kdfMemory: 64, kdfParallelism: 4 }));
 });
 
 test('PIN wrap round-trip', async () => {
