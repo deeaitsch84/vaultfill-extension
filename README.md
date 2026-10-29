@@ -7,6 +7,7 @@
 **Autofill für Vaultwarden, wie es sein sollte: Feld anklicken, Login wählen, fertig.**<br>
 Kein Popup öffnen, kein Suchen, kein „Fill“-Button.
 
+![License: GPL-3.0](https://img.shields.io/badge/Lizenz-GPL--3.0-blue)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?logo=googlechrome&logoColor=white)
 ![Vaultwarden](https://img.shields.io/badge/Vaultwarden-kompatibel-175DDC?logo=bitwarden&logoColor=white)
 ![No build step](https://img.shields.io/badge/Build-keiner-22c55e)
@@ -123,6 +124,12 @@ E2E gegen ein echtes Vaultwarden – gegengeprüft mit der **offiziellen `bw` CL
 ## 🖥️ Desktop-App
 
 Spotlight-artige Schnellsuche für alle Apps, Logins anlegen, Passwort-Check und Agenten-Zugriff per MCP: **[vaultfill-desktop](https://github.com/deeaitsch84/vaultfill-desktop)**.
+
+## 📄 Lizenz
+
+[GPL-3.0](LICENSE) – frei nutzbar, veränderbar und weitergebbar; veröffentlichte Ableger müssen ihren Quellcode ebenfalls offenlegen.
+Mitgelieferte Drittkomponenten behalten ihre Lizenz: [hash-wasm](lib/hash-wasm.LICENSE) (MIT), [Public Suffix List](lib/psl.LICENSE) (MPL-2.0).
+Sicherheitslücken bitte privat melden – siehe [SECURITY.md](SECURITY.md).
 
 ---
 

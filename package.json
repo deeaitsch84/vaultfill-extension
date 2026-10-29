@@ -1,5 +1,8 @@
 {
   "private": true,
+  "license": "GPL-3.0-only",
   "type": "module",
-  "scripts": { "test": "node --test test/*.mjs" }
+  "scripts": {
+    "test": "node --test test/*.mjs"
+  }
 }
