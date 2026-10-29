@@ -206,7 +206,11 @@
   document.addEventListener('focusin', (e) => { if (isField(e.target)) show(e.target); else hide(); }, true);
   document.addEventListener('click', (e) => { if (!target && e.target === document.activeElement && isField(e.target)) show(e.target); }, true);
   // isTrusted: our own fill dispatches input events too, those must not re-open the list
-  document.addEventListener('input', (e) => { if (e.isTrusted && e.target === field && document.activeElement === field) filter(); }, true);
+  // typing an own password: get out of the way (the list would cover the submit button)
+  document.addEventListener('input', (e) => {
+    if (!e.isTrusted || e.target !== field || document.activeElement !== field) return;
+    if (field.type === 'password') hide(); else filter();
+  }, true);
   document.addEventListener('focusout', (e) => { if (e.target === target) hide(); }, true);
   document.addEventListener('scroll', hide, true);
   window.addEventListener('resize', hide);
