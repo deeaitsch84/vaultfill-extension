@@ -2,135 +2,137 @@
 
 <img src="icons/icon128.png" width="96" alt="Vaultfill">
 
-# Vaultfill für Chrome
+# Vaultfill for Chrome
 
-**Autofill für Vaultwarden, wie es sein sollte: Feld anklicken, Login wählen, fertig.**<br>
-Kein Popup öffnen, kein Suchen, kein „Fill“-Button.
+**Vaultwarden autofill the way it should be: click the field, pick the login, done.**<br>
+No opening the popup, no searching, no "Fill" button.
 
-![License: GPL-3.0](https://img.shields.io/badge/Lizenz-GPL--3.0-blue)
+![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?logo=googlechrome&logoColor=white)
-![Vaultwarden](https://img.shields.io/badge/Vaultwarden-kompatibel-175DDC?logo=bitwarden&logoColor=white)
-![No build step](https://img.shields.io/badge/Build-keiner-22c55e)
+![Vaultwarden](https://img.shields.io/badge/Vaultwarden-compatible-175DDC?logo=bitwarden&logoColor=white)
+![No build step](https://img.shields.io/badge/Build%20step-none-22c55e)
 ![Dependencies](https://img.shields.io/badge/Dependencies-0%20(+hash--wasm)-8b5cf6)
 
-<img src="docs/screenshots/ext-dropdown.png" width="640" alt="Vorschläge direkt am Login-Feld">
+<img src="docs/screenshots/ext-dropdown.png" width="640" alt="Suggestions right at the login field">
 
 </div>
 
 ---
 
-## ✨ Was es kann
+## ✨ Features
 
 | | |
 |---|---|
-| ⚡ **Inline-Vorschläge** | Login-Feld fokussieren → passende Einträge erscheinen direkt darunter. ↑↓ ⏎, tippen filtert. |
-| ⌨️ **⌘⇧L** | Genau ein Treffer? Sofort gefüllt. Sonst Vorschläge – oder die Suche im Popup. |
-| 💾 **Speichern & Aktualisieren** | Nach dem Login fragt Vaultfill „Speichern?“ bzw. „Passwort aktualisieren?“ (altes Passwort → Historie). |
-| 🎲 **Passwort-Generator** | Auf Registrierungsseiten: starkes Passwort in Passwort *und* Wiederholung. |
-| 🔢 **2FA-Codes** | Im Code-Feld steht der aktuelle TOTP-Code des passenden Eintrags bereit. |
-| 🔐 **SSO & 2FA-Login** | Vaultwarden mit SSO (z. B. Entra ID), TOTP- oder E-Mail-2FA. |
-| 👆 **Touch ID & PIN** | Entsperren per Fingerabdruck (WebAuthn-PRF) oder PIN. Auto-Sperre nach 30 min / Bildschirmsperre. |
-| 🔄 **Live-Sync** | Änderungen aus anderen Clients kommen über Vaultwardens Notification-Hub in Sekunden an. |
-| 📋 **⌘C / ⌘⇧C** | Benutzername bzw. Passwort des markierten Eintrags kopieren. |
+| ⚡ **Inline suggestions** | Focus a login field → matching entries appear right below it. ↑↓ ⏎; typing filters. |
+| ⌨️ **⌘⇧L** | Exactly one match? Filled instantly. Otherwise suggestions – or search in the popup. |
+| 💾 **Save & update** | After you sign in, Vaultfill asks "Save?" or "Update password?" (the old password goes to the history). |
+| 🎲 **Password generator** | On sign-up pages: a strong password in both the password *and* the confirmation field. |
+| 🔢 **2FA codes** | The current TOTP code of the matching entry is ready in the code field. |
+| 🔐 **SSO & 2FA login** | Vaultwarden with SSO (e.g. Entra ID), TOTP or e-mail 2FA. |
+| 👆 **Touch ID & PIN** | Unlock with your fingerprint (WebAuthn PRF) or a PIN. Auto-lock after 30 min idle or on screen lock. |
+| 🔄 **Live sync** | Changes from other clients arrive within seconds via Vaultwarden's notification hub. |
+| 📋 **⌘C / ⌘⇧C** | Copy the username or password of the highlighted entry. |
+
+> The user interface is currently in German.
 
 ## 📸 Screenshots
 
 <table>
   <tr>
-    <td align="center"><img src="docs/screenshots/ext-save.png" alt="Login speichern"><br><sub><b>Login speichern</b> – nach dem Absenden</sub></td>
-    <td align="center"><img src="docs/screenshots/ext-generator.png" alt="Passwort-Generator"><br><sub><b>Generator</b> – auf Registrierungsseiten</sub></td>
+    <td align="center"><img src="docs/screenshots/ext-save.png" alt="Save login"><br><sub><b>Save login</b> – after submitting</sub></td>
+    <td align="center"><img src="docs/screenshots/ext-generator.png" alt="Password generator"><br><sub><b>Generator</b> – on sign-up pages</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/screenshots/ext-totp.png" alt="2FA-Code"><br><sub><b>2FA-Code</b> – direkt im Code-Feld</sub></td>
+    <td align="center"><img src="docs/screenshots/ext-totp.png" alt="2FA code"><br><sub><b>2FA code</b> – right in the code field</sub></td>
     <td align="center">
       <img src="docs/screenshots/ext-popup.png" width="230" alt="Popup">
-      <img src="docs/screenshots/ext-unlock.png" width="230" alt="Entsperren"><br>
-      <sub><b>Popup</b> – Suche über alles · <b>Entsperren</b> mit Touch ID</sub>
+      <img src="docs/screenshots/ext-unlock.png" width="230" alt="Unlock"><br>
+      <sub><b>Popup</b> – search everything · <b>Unlock</b> with Touch ID</sub>
     </td>
   </tr>
 </table>
 
 ## 🚀 Installation
 
-1. Repository klonen.
-2. `chrome://extensions` → **Entwicklermodus** an → **Entpackte Erweiterung laden** → Ordner wählen.
-3. Vaultfill-Icon → Server-URL, E-Mail, Master-Passwort → **Anmelden**.
-4. Optional: `chrome://extensions/shortcuts` → Kürzel prüfen (Standard ⌘⇧L).
+1. Clone the repository.
+2. `chrome://extensions` → enable **Developer mode** → **Load unpacked** → select the folder.
+3. Vaultfill icon → server URL, e-mail, master password → **Anmelden** (sign in).
+4. Optional: `chrome://extensions/shortcuts` → check the shortcut (default ⌘⇧L, Ctrl+Shift+L on Windows/Linux).
 
-> Kein `npm install`, kein Bundler: Chrome lädt den Ordner so wie er ist.
+> No `npm install`, no bundler: Chrome loads the folder as it is.
 
-## ⌨️ Bedienung
+## ⌨️ Usage
 
-| Wo | Taste | Aktion |
+| Where | Key | Action |
 |---|---|---|
-| Login-Feld | `↑` `↓` `⏎` `Esc` | Vorschlag wählen / füllen / schließen |
-| Login-Feld | `⌘C` · `⌘⇧C` | Benutzername · Passwort kopieren |
-| überall | `⌘⇧L` | Füllen, Vorschläge oder Popup |
-| Popup | tippen, `⏎` | Alle Einträge durchsuchen, aktuelle Seite füllen |
+| Login field | `↑` `↓` `⏎` `Esc` | Pick a suggestion / fill / close |
+| Login field | `⌘C` · `⌘⇧C` | Copy username · password |
+| Anywhere | `⌘⇧L` | Fill, show suggestions or open the popup |
+| Popup | type, `⏎` | Search all entries, fill the current page |
 
-## 🛡️ Sicherheitsmodell
+## 🛡️ Security model
 
-- **Ende-zu-Ende wie Bitwarden:** Schlüsselableitung (PBKDF2 / Argon2id) und AES-CBC + HMAC laufen lokal; der Server sieht nie Klartext.
-- **Speicherorte:** verschlüsselter Vault + Tokens in `storage.local`; entschlüsselter Schlüssel und Index (Namen, Benutzernamen, URLs – **keine Passwörter**) nur in `storage.session` (RAM).
-- **Passwörter erst beim Füllen** entschlüsselt – und nur für Einträge, die zur URL des anfragenden Frames passen. Die URL setzt Chrome, nicht die Webseite.
-- **Webseiten** sehen die Vorschläge nicht (geschlossenes Shadow DOM) und können weder Login noch Entsperren auslösen.
-- **Touch ID:** WebAuthn-Passkey mit PRF-Erweiterung; das PRF-Ergebnis verschlüsselt eine Kopie des User-Keys. **PIN:** nur bis zum Browser-Neustart, 5 Fehlversuche → gelöscht.
-- **URL-Abgleich** nach der [Public Suffix List](https://publicsuffix.org) inkl. privater Suffixe (`evil.github.io` bekommt nichts von `victim.github.io`); https-Logins nie auf http-Seiten, anderer Port = andere Seite, „Beginnt mit“ nur im selben Origin.
-- **Nur echte Eingaben:** Füllen, Kopieren und Erfassen reagieren nur auf echte Tastatur-/Maus-Ereignisse bzw. Nutzeraktionen – eine Seite kann die Liste nicht per Skript bedienen oder Passwörter „einreichen“.
-- **Speichern-Angebote** sind an die Domain gebunden und werden beim Sperren verworfen; aktualisiert wird nur ein Eintrag mit passendem Benutzernamen.
-- **Server:** http nur für lokale Server; zu schwache oder plötzlich abgeschwächte KDF-Einstellungen werden abgelehnt.
+- **End-to-end like Bitwarden:** key derivation (PBKDF2 / Argon2id) and AES-CBC + HMAC run locally; the server never sees plaintext.
+- **Storage:** encrypted vault + tokens in `storage.local`; the decrypted key and index (names, usernames, URLs – **no passwords**) only in `storage.session` (memory).
+- **Passwords are decrypted only when filling** – and only for entries that match the URL of the requesting frame. That URL is set by Chrome, not by the web page.
+- **Web pages** cannot see the suggestions (closed shadow DOM) and cannot trigger sign-in or unlock.
+- **Touch ID:** a WebAuthn passkey with the PRF extension; the PRF output encrypts a copy of the user key. **PIN:** valid until the browser restarts, deleted after 5 wrong attempts.
+- **URL matching** uses the [Public Suffix List](https://publicsuffix.org) incl. private suffixes (`evil.github.io` gets nothing from `victim.github.io`); https logins never on http pages, a different port is a different site, "starts with" only within the same origin.
+- **Real input only:** filling, copying and capturing react only to genuine keyboard/mouse events and user activation – a page cannot drive the list by script or "submit" passwords.
+- **Save offers** are bound to their domain and discarded on lock; only an entry with a matching username is ever updated.
+- **Server:** plain http only for local servers; weak or suddenly weakened KDF settings are rejected.
 
-### Bekannte Grenzen
+### Known limits
 
-- Eine Seite derselben Domain sieht, *ob* die Vorschlagsliste erscheint (Anzahl der Einträge, gesperrt ja/nein) – nicht deren Inhalt.
-- Zugriffs-Tokens liegen (wie bei der offiziellen Bitwarden-Extension) in `storage.local`; der Vault selbst bleibt verschlüsselt.
-- Ein bösartiger Server kann über eine präparierte Organisation Einträge unterschieben (bekannte Eigenschaft des Bitwarden-Protokolls).
+- A page on the same domain can tell *whether* the suggestion list appears (number of entries, locked or not) – not its contents.
+- Access tokens live in `storage.local` (like in the official Bitwarden extension); the vault itself stays encrypted.
+- A malicious server can inject entries through a crafted organization (a known property of the Bitwarden protocol).
 
-## 🧩 Aufbau
+## 🧩 Architecture
 
 ```mermaid
 flowchart LR
-  subgraph Webseite
-    CS[content.js<br/>Vorschläge · Speichern-Karte]
+  subgraph Web page
+    CS[content.js<br/>suggestions · save card]
   end
   subgraph Extension
-    BG[background.js<br/>Service Worker]
+    BG[background.js<br/>service worker]
     PU[popup.html/js]
-    V[vault.js<br/>Krypto · Protokoll]
+    V[vault.js<br/>crypto · protocol]
   end
   VW[(Vaultwarden)]
   CS -- suggest / fill / captured --> BG
   PU -- login / unlock / search --> BG
   BG --> V
-  V -- Prelogin · Token · Sync · Ciphers --> VW
-  VW -- Live-Sync (SignalR) --> BG
+  V -- prelogin · token · sync · ciphers --> VW
+  VW -- live sync (SignalR) --> BG
 ```
 
-| Datei | Aufgabe |
+| File | Role |
 |---|---|
-| `vault.js` | Bitwarden-Protokoll: KDF, EncString, Login, Sync, Einträge anlegen/ändern, URI-Matching, TOTP, Passwort-Check |
-| `background.js` | Zustand, SSO, Entsperren, Speichern-Angebote, Live-Sync, Auto-Sperre |
-| `content.js` | Felderkennung, Dropdown, Generator, 2FA, Speichern-Karte |
-| `popup.html/js` | Anmelden, Entsperren, Suche, Einstellungen |
+| `vault.js` | Bitwarden protocol: KDF, EncString, login, sync, create/edit entries, URI matching, TOTP, password check |
+| `background.js` | State, SSO, unlock, save offers, live sync, auto-lock |
+| `content.js` | Field detection, dropdown, generator, 2FA, save card |
+| `popup.html/js` | Sign in, unlock, search, settings |
 
 ## 🧪 Tests
 
 ```bash
-npm test   # Unit: URI-Matching, PIN, TOTP (RFC 6238), Passwortstärke
+npm test   # unit: URI matching, Public Suffix List, KDF checks, PIN, TOTP (RFC 6238), password strength
 ```
 
-E2E gegen ein echtes Vaultwarden – gegengeprüft mit der **offiziellen `bw` CLI** (Registrierung, Entschlüsselung, URI ergänzen ohne Datenverlust). Anleitung im Kopf von [`test/vault.test.mjs`](test/vault.test.mjs).
+End-to-end against a real Vaultwarden – cross-checked with the **official `bw` CLI** (registration, decryption, adding a URI without data loss). Instructions at the top of [`test/vault.test.mjs`](test/vault.test.mjs).
 
-## 🖥️ Desktop-App
+## 🖥️ Desktop app
 
-Spotlight-artige Schnellsuche für alle Apps, Logins anlegen, Passwort-Check und Agenten-Zugriff per MCP: **[vaultfill-desktop](https://github.com/deeaitsch84/vaultfill-desktop)**.
+Spotlight-style quick search for every app, creating logins, password check and agent access via MCP: **[vaultfill-desktop](https://github.com/deeaitsch84/vaultfill-desktop)**.
 
-## 📄 Lizenz
+## 📄 License
 
-[GPL-3.0](LICENSE) – frei nutzbar, veränderbar und weitergebbar; veröffentlichte Ableger müssen ihren Quellcode ebenfalls offenlegen.
-Mitgelieferte Drittkomponenten behalten ihre Lizenz: [hash-wasm](lib/hash-wasm.LICENSE) (MIT), [Public Suffix List](lib/psl.LICENSE) (MPL-2.0).
-Sicherheitslücken bitte privat melden – siehe [SECURITY.md](SECURITY.md).
+[GPL-3.0](LICENSE) – free to use, modify and share; published derivatives must make their source code available too.
+Bundled third-party components keep their licenses: [hash-wasm](lib/hash-wasm.LICENSE) (MIT), [Public Suffix List](lib/psl.LICENSE) (MPL-2.0).
+Please report security issues privately – see [SECURITY.md](SECURITY.md).
 
 ---
 
-<sub>Inoffizieller Client. Bitwarden ist eine Marke der Bitwarden Inc.; Vaultfill ist damit nicht verbunden.</sub>
+<sub>Unofficial client. Bitwarden is a trademark of Bitwarden Inc.; Vaultfill is not affiliated with it.</sub>
