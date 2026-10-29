@@ -1,2 +1,12 @@
 node_modules/
 .DS_Store
+
+# secrets / signing material – never commit
+*.p12
+*.p8
+*.pem
+*.cer
+*.key
+*.keychain-db
+.env*
+state.bin
