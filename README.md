@@ -74,6 +74,16 @@ Kein Popup öffnen, kein Suchen, kein „Fill“-Button.
 - **Passwörter erst beim Füllen** entschlüsselt – und nur für Einträge, die zur URL des anfragenden Frames passen. Die URL setzt Chrome, nicht die Webseite.
 - **Webseiten** sehen die Vorschläge nicht (geschlossenes Shadow DOM) und können weder Login noch Entsperren auslösen.
 - **Touch ID:** WebAuthn-Passkey mit PRF-Erweiterung; das PRF-Ergebnis verschlüsselt eine Kopie des User-Keys. **PIN:** nur bis zum Browser-Neustart, 5 Fehlversuche → gelöscht.
+- **URL-Abgleich** nach der [Public Suffix List](https://publicsuffix.org) inkl. privater Suffixe (`evil.github.io` bekommt nichts von `victim.github.io`); https-Logins nie auf http-Seiten, anderer Port = andere Seite, „Beginnt mit“ nur im selben Origin.
+- **Nur echte Eingaben:** Füllen, Kopieren und Erfassen reagieren nur auf echte Tastatur-/Maus-Ereignisse bzw. Nutzeraktionen – eine Seite kann die Liste nicht per Skript bedienen oder Passwörter „einreichen“.
+- **Speichern-Angebote** sind an die Domain gebunden und werden beim Sperren verworfen; aktualisiert wird nur ein Eintrag mit passendem Benutzernamen.
+- **Server:** http nur für lokale Server; zu schwache oder plötzlich abgeschwächte KDF-Einstellungen werden abgelehnt.
+
+### Bekannte Grenzen
+
+- Eine Seite derselben Domain sieht, *ob* die Vorschlagsliste erscheint (Anzahl der Einträge, gesperrt ja/nein) – nicht deren Inhalt.
+- Zugriffs-Tokens liegen (wie bei der offiziellen Bitwarden-Extension) in `storage.local`; der Vault selbst bleibt verschlüsselt.
+- Ein bösartiger Server kann über eine präparierte Organisation Einträge unterschieben (bekannte Eigenschaft des Bitwarden-Protokolls).
 
 ## 🧩 Aufbau
 
