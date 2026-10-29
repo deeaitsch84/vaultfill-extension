@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Vaultfill</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f7f7fb; --card: #ffffff; --fg: #15151c; --mute: #6e6e7d; --line: #e6e6ef;
+    --field: #f0f0f6; --hover: #f1f0fb; --sel: #ebe8ff;
+    --a1: #3b82f6; --a2: #6d28d9; --acc: #5b4ee8; --ring: #5b4ee855;
+    --err-bg: #fdecec; --err: #c42b2b;
+    --grad: linear-gradient(135deg, var(--a1), var(--a2));
+    --shadow: 0 1px 2px #0000000d, 0 8px 24px #0000000f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101015; --card: #18181f; --fg: #ececf2; --mute: #8d8d9c; --line: #26262f;
+      --field: #1f1f28; --hover: #20202a; --sel: #27243f; --acc: #8b7dff; --ring: #8b7dff55;
+      --err-bg: #3a1b1e; --err: #ff8a8a; --shadow: 0 1px 2px #0006, 0 8px 24px #0005;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { width: 340px; margin: 0; background: var(--bg); color: var(--fg); font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+  body.win { width: auto; min-height: 100vh; display: grid; align-content: center; }
+  [hidden] { display: none !important; }
+  svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* header */
+  .bar { display: flex; align-items: center; gap: 8px; padding: 12px 12px 10px 14px; }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 650; letter-spacing: -.01em; font-size: 14px; flex: 1; }
+  .brand img { width: 22px; height: 22px; border-radius: 6px; }
+  .icon-btn { display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 8px; background: none; color: var(--mute); cursor: pointer; transition: background .15s, color .15s; }
+  .icon-btn:hover { background: var(--hover); color: var(--fg); }
+  .icon-btn:focus-visible, .btn:focus-visible, li:focus-visible { outline: 2px solid var(--acc); outline-offset: 1px; }
+  .icon-btn.spin svg { animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* fields & buttons */
+  .field { position: relative; display: flex; align-items: center; }
+  .field > svg { position: absolute; left: 11px; color: var(--mute); pointer-events: none; }
+  input { width: 100%; font: inherit; color: inherit; background: var(--field); border: 1px solid transparent; border-radius: 10px; padding: 9px 12px; outline: none; transition: border-color .15s, box-shadow .15s, background .15s; }
+  .field > svg + input { padding-left: 34px; }
+  input:focus { border-color: var(--acc); box-shadow: 0 0 0 3px var(--ring); background: var(--card); }
+  input::placeholder { color: var(--mute); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: inherit; font-weight: 600; border: 0; border-radius: 10px; padding: 9px 14px; cursor: pointer; transition: filter .15s, transform .05s, background .15s; }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary { background: var(--grad); color: #fff; box-shadow: 0 4px 14px #5b4ee840; }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.soft { background: var(--field); color: var(--fg); }
+  .btn.soft:hover { background: var(--hover); }
+  .btn.danger { background: none; color: var(--err); padding: 6px 8px; font-weight: 500; }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .btn.block { width: 100%; }
+
+  /* auth screens */
+  .auth { display: flex; flex-direction: column; gap: 10px; padding: 22px 18px 18px; }
+  .hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; margin-bottom: 6px; }
+  .hero img { width: 52px; height: 52px; border-radius: 14px; box-shadow: 0 8px 24px #5b4ee840; margin-bottom: 8px; }
+  .hero h1 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
+  .hero p { margin: 0; color: var(--mute); font-size: 12px; overflow-wrap: anywhere; }
+  .or { display: flex; align-items: center; gap: 10px; color: var(--mute); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .inline { display: flex; gap: 6px; }
+  .inline .btn { padding: 0 12px; }
+  .hint { color: var(--mute); font-size: 11.5px; text-align: center; margin: 2px 0 0; }
+
+  /* vault view */
+  .search { padding: 0 12px 8px; }
+  .label { padding: 6px 16px 4px; color: var(--mute); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; display: flex; gap: 6px; }
+  .label b { color: var(--fg); font-weight: 600; text-transform: none; letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  ul { list-style: none; margin: 0; padding: 0 6px; max-height: 300px; overflow: auto; scrollbar-width: thin; }
+  li { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 10px; cursor: pointer; transition: background .12s; }
+  li:hover, li:focus { background: var(--hover); outline: none; }
+  li .ico { width: 30px; height: 30px; border-radius: 8px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); display: grid; place-items: center; flex: none; overflow: hidden; }
+  li .ico img { width: 18px; height: 18px; }
+  li .txt { min-width: 0; flex: 1; }
+  li .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  li .user { color: var(--mute); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  li .go { color: var(--mute); opacity: 0; transition: opacity .12s; }
+  li:hover .go, li:focus .go { opacity: 1; }
+  li.empty { justify-content: center; text-align: center; color: var(--mute); padding: 22px 16px; cursor: default; background: none; }
+  .empty > div { width: 100%; }
+  .empty svg { width: 28px; height: 28px; opacity: .5; margin-bottom: 6px; }
+  .check { display: flex; align-items: center; gap: 8px; padding: 8px 16px 0; color: var(--mute); font-size: 12px; cursor: pointer; }
+  .check input { width: 15px; height: 15px; accent-color: var(--acc); margin: 0; }
+  .foot { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding: 9px 16px; border-top: 1px solid var(--line); color: var(--mute); font-size: 11.5px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px #22c55e2e; }
+
+  /* settings */
+  .settings { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 10px; }
+  .card { background: var(--card); border-radius: 12px; padding: 12px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; }
+  .card-head { display: flex; align-items: center; gap: 10px; }
+  .card-head .ico { width: 32px; height: 32px; border-radius: 9px; background: var(--grad); color: #fff; display: grid; place-items: center; }
+  .card-head .t { flex: 1; } .card-head .t b { display: block; } .card-head .t span { color: var(--mute); font-size: 12px; }
+  .pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; background: var(--field); color: var(--mute); }
+  .pill.on { background: #22c55e22; color: #16a34a; }
+  .meta { color: var(--mute); font-size: 11.5px; padding: 0 4px; }
+
+  .err { margin: 0 14px 12px; padding: 8px 10px; border-radius: 10px; background: var(--err-bg); color: var(--err); font-size: 12px; }
+  .err:empty { display: none; }
+  .err.info { background: var(--sel); color: var(--fg); }
+</style>
+</head>
+<body>
+  <svg hidden aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-sync" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-finger" viewBox="0 0 24 24"><path d="M12 11v3a8 8 0 0 1-1.4 4.5"/><path d="M8.5 7.8A5 5 0 0 1 17 11v2a12 12 0 0 1-.6 3.8"/><path d="M7 12a5 5 0 0 1 .3-1.7M5 15.5c.6-1.2 1-2.3 1-3.5a6 6 0 0 1 2-4.5M19.6 14.5c.3-1 .4-2 .4-2.5a8 8 0 0 0-14.6-4.5M9 20.5c.7-1 1.3-2.2 1.7-3.4M14.5 21.5c.4-.9.7-1.8.9-2.7"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3M17 6l3 3M14 9l2 2"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  </svg>
+
+  <!-- login -->
+  <form id="login" class="auth" hidden>
+    <div class="hero"><img src="icons/icon128.png" alt=""><h1>Bei Vaultwarden anmelden</h1><p>Bei SSO öffnet sich danach ein Tab.</p></div>
+    <input name="server" type="url" placeholder="https://vault.example.com" aria-label="Server" required>
+    <input name="email" type="email" placeholder="E-Mail" aria-label="E-Mail" autocomplete="username" required>
+    <input name="password" type="password" placeholder="Master-Passwort" aria-label="Master-Passwort" autocomplete="current-password" required>
+    <button class="btn primary block">Anmelden</button>
+  </form>
+
+  <!-- 2FA -->
+  <form id="totp" class="auth" hidden>
+    <div class="hero"><img src="icons/icon128.png" alt=""><h1>Zwei-Faktor-Code</h1><p id="totpHint"></p></div>
+    <input name="totp" placeholder="123 456" aria-label="2FA-Code" autocomplete="one-time-code" inputmode="numeric" required style="text-align:center;font-size:18px;letter-spacing:.2em">
+    <button class="btn primary block">Bestätigen</button>
+    <button type="button" class="btn danger" data-act="lock">Abbrechen</button>
+  </form>
+
+  <!-- unlock -->
+  <form id="unlock" class="auth" hidden>
+    <div class="hero"><img src="icons/icon128.png" alt=""><h1>Vault gesperrt</h1><p id="who"></p></div>
+    <button type="button" class="btn primary block" id="touch" hidden><svg><use href="#i-finger"/></svg>Mit Touch ID entsperren</button>
+    <div class="or" id="or" hidden>oder</div>
+    <div class="inline">
+      <input name="password" type="password" autocomplete="current-password" aria-label="PIN oder Master-Passwort" required>
+      <button class="btn soft" aria-label="Entsperren"><svg><use href="#i-arrow"/></svg></button>
+    </div>
+    <button type="button" class="btn danger" data-act="logout">Abmelden</button>
+  </form>
+
+  <!-- header for unlocked views -->
+  <header class="bar" id="bar" hidden>
+    <div class="brand"><img src="icons/icon128.png" alt="">Vaultfill</div>
+    <button type="button" class="icon-btn" id="syncBtn" title="Synchronisieren" aria-label="Synchronisieren"><svg><use href="#i-sync"/></svg></button>
+    <button type="button" class="icon-btn" data-act="lock" title="Sperren" aria-label="Sperren"><svg><use href="#i-lock"/></svg></button>
+    <button type="button" class="icon-btn" id="gear" title="Einstellungen" aria-label="Einstellungen"><svg><use href="#i-gear"/></svg></button>
+  </header>
+
+  <!-- vault -->
+  <section id="open" hidden>
+    <div class="search field"><svg style="left:23px"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Alle Einträge durchsuchen" aria-label="Einträge suchen" autocomplete="off"></div>
+    <div class="label" id="listLabel"></div>
+    <ul id="results" aria-label="Einträge"></ul>
+    <label class="check" id="rememberRow" hidden><input type="checkbox" id="remember"> URL dieser Seite beim Eintrag speichern</label>
+    <div class="foot"><span class="dot"></span><span id="info"></span></div>
+  </section>
+
+  <!-- settings -->
+  <section id="settings" hidden>
+    <div class="settings">
+      <div class="card">
+        <div class="card-head">
+          <span class="ico"><svg><use href="#i-finger"/></svg></span>
+          <div class="t"><b>Touch ID</b><span>Entsperren per Fingerabdruck</span></div>
+          <span class="pill" id="touchPill"></span>
+        </div>
+        <button type="button" class="btn soft block" id="touchEnroll">Einrichten</button>
+        <button type="button" class="btn danger" data-act="removeTouchId" id="touchRemove">Entfernen</button>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <span class="ico"><svg><use href="#i-key"/></svg></span>
+          <div class="t"><b>PIN</b><span>Gilt bis zum Browser-Neustart</span></div>
+          <span class="pill" id="pinPill"></span>
+        </div>
+        <div class="inline">
+          <input id="pin" type="password" inputmode="numeric" placeholder="Neue PIN (min. 4 Ziffern)" aria-label="Neue PIN" autocomplete="off">
+          <button type="button" class="btn soft" id="pinSet">Setzen</button>
+        </div>
+        <button type="button" class="btn danger" data-act="removePin" id="pinRemove">Entfernen</button>
+      </div>
+      <p class="meta">Auto-Sperre nach 30 min Leerlauf oder bei Bildschirmsperre. <span id="shortcut"></span></p>
+      <button type="button" class="btn soft block" data-act="logout"><svg><use href="#i-logout"/></svg>Abmelden</button>
+    </div>
+  </section>
+
+  <p class="err" id="err" role="alert"></p>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
